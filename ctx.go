@@ -1,6 +1,6 @@
 package web
 
-import "github.com/scottcagno/safemap"
+import "github.com/cagnosolutions/safemap"
 
 type Context struct {
 	sm *safemap.SafeMap
