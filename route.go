@@ -1,12 +1,13 @@
 package web
 
 type Route struct {
-	method, path string
-	handle       Controller
-	secure       bool
+	method string
+	path   []string
+	handle Controller
+	secure bool
 }
 
-func RouteInstance(method, path string, handle Controller, secure bool) *Route {
+func RouteInstance(method string, path []string, handle Controller, secure bool) *Route {
 	return &Route{
 		method: method,
 		path:   path,
