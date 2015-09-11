@@ -37,13 +37,24 @@ func main() {
 
 }
 
+// auth required controller
 func index(w http.ResponseWriter, r *http.Request, c *Context) {
+	c.CheckAuth("/foo", w, r)
+	http.Redirect(w http.ResponseWriter, r *http.Request, urlStr string, code int)
+	usrCtx := c.GetUsr(usr.getname)
+
 	fmt.Fprintf(w, "%s", GetUser(r))
 	//fmt.Fprintf(w, "page: index, addr: %s, user-agent: %s", r.RemoteAddr, r.UserAgent())
 	return
 }
 
 func home(w http.ResponseWriter, r *http.Request, c *Context) {
+	if !c.Auth() {
+		// add message
+		// remove cart
+		redirect "/bar"
+	}
+
 	fmt.Fprintf(w, "page: home, addr: %s, user-agent: %s", r.RemoteAddr, r.UserAgent())
 	return
 }

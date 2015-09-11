@@ -1,6 +1,9 @@
 package web
 
-import "net/http"
+import (
+	"fmt"
+	"net/http"
+)
 
 type Mux struct {
 	routes []*Route
@@ -23,14 +26,18 @@ func (m *Mux) SecureHandle(method, path string, controller Controller) {
 }
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "OPTIONS" {
+	if r.Method == "OPTIONS" || r.URL.Path == "/favicon.ico" {
 		return
 	}
+	fmt.Println(r.URL.Path)
 	for _, route := range m.routes {
 		if route.method == r.Method {
 			path := SliceString(r.URL.Path, '/')
-			if _, ok := match(path, route.path); ok {
-				route.handle(w, r, m.ctx)
+			if pathVars, ok := match(path, route.path); ok {
+				// get session
+				ctx := m.cts.GetUser(w, r)
+				// usr = UserContext
+				route.handle(w, r, ctx)
 				return
 			}
 		}
