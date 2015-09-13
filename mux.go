@@ -7,13 +7,13 @@ import (
 
 type Mux struct {
 	routes []*Route
-	ctx    *Context
+	ctx    *ContextStore
 }
 
 func MuxInstance() *Mux {
 	return &Mux{
 		routes: make([]*Route, 0),
-		ctx:    ContextInstance(),
+		ctx:    ContextStoreInstance(HOUR / 2),
 	}
 }
 
@@ -34,9 +34,8 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if route.method == r.Method {
 			path := SliceString(r.URL.Path, '/')
 			if pathVars, ok := match(path, route.path); ok {
-				// get session
-				ctx := m.cts.GetUser(w, r)
-				// usr = UserContext
+				ctx := m.ctx.GetContext(w, r)
+				ctx.SetPathVars(pathVars)
 				route.handle(w, r, ctx)
 				return
 			}
