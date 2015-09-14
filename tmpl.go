@@ -73,18 +73,27 @@ func (ts *TemplateStore) Cache(name ...string) {
 }
 
 func (ts *TemplateStore) Render(w http.ResponseWriter, name string, model interface{}) {
-
-	if t, ok := ts.cache[name]; !ok {
-		ts.cache[name] = template.Must(ts.base.ParseFiles(ts.dir+"/"+name))
+	t1 := time.Now().UnixNano()
+	t, ok := ts.cache[name]
+	if !ok {
+		t = template.Must(ts.base.ParseFiles(ts.dir+"/"+name))
+		ts.cache[name] = t
 		t.Execute(w, model)
+		fmt.Printf("Took %d ns\n", time.Now().UnixNano() - t1)
+		fmt.Println("1")
 		return
 	}
 	if changed(ts.dir+"/"+name) {
-		t := template.Must(ts.base.ParseFiles(ts.dir+"/"+name))
+		t = template.Must(template.ParseFiles(ts.dir+"/base.html", ts.dir+"/"+name))
 		ts.cache[name] = t
 		t.Execute(w, model)
+		fmt.Printf("Took %d ns\n", time.Now().UnixNano() - t1)
+		fmt.Println("2")
+		return
 	}
-
+	t.Execute(w, model)
+	fmt.Printf("Took %d ns\n", time.Now().UnixNano() - t1)
+	fmt.Println("3")
 }
 
 func changed(path string) bool {
@@ -97,6 +106,7 @@ func changed(path string) bool {
 		return false
 	}
 	// no err; eval and return (true) file been modified within the last n seconds
+	fmt.Printf("file time: %d, now - 3s %d\n", fstat.ModTime().Unix(), time.Now().Unix() - 3)
 	return fstat.ModTime().Unix() >= time.Now().Unix() - 3
 }
 
