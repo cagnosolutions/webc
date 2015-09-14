@@ -5,9 +5,29 @@ import (
 	"net/http"
 	"strings"
 	"sync"
+	"time"
+	"fmt"
+	"os"
+	"log"
 )
 
-type Model map[string]interface{}
+type M map[string]interface{}
+
+/*
+type TemplateStore *template.Template
+
+var T *template.Template
+
+func RegisterTemplates(fileNames ...string) {
+	T = template.Must(template.ParseFiles("templates/base.html"))
+	T.ParseFiles(fileNames...)
+
+
+	for _, t := range T.Templates() {
+		fmt.Printf("%+v\n",t.Name())
+	}
+}
+*/
 
 type TemplateStore struct {
 	dir   string
@@ -17,10 +37,11 @@ type TemplateStore struct {
 	sync.RWMutex
 }
 
-func TemplateStoreInstance(dir string) *TemplateStore {
+func TemplateStoreInstance(dir string, funcs map[string]func()) *TemplateStore {
 	ts := &TemplateStore{
 		dir:   dir,
-		base:  template.New("base.html"),
+		//base:  template.New("base.html"),
+		base: template.Must(template.ParseFiles(dir+"/base.html")),
 		cache: make(map[string]*template.Template),
 		funcs: template.FuncMap{
 			"title": strings.Title,
@@ -32,6 +53,11 @@ func TemplateStoreInstance(dir string) *TemplateStore {
 			"split": strings.Split,
 		},
 	}
+	if funcs != nil {
+		for k, v := range funcs {
+			ts.funcs[k] = v
+		}
+	}
 	ts.base.Funcs(ts.funcs)
 	return ts
 }
@@ -39,36 +65,45 @@ func TemplateStoreInstance(dir string) *TemplateStore {
 func (ts *TemplateStore) Cache(name ...string) {
 	ts.Lock()
 	for i := 0; i < len(name); i++ {
-		ts.cache[name[i]] = template.Must(ts.base.ParseFiles(ts.dir+"/base.html", ts.dir+"/"+name[i]))
+		fmt.Printf("Cacheing %s\n", name[i])
+		//ts.cache[name[i]] = template.Must(ts.base.ParseFiles(ts.dir+"/base.html", ts.dir+"/"+name[i]))
+		ts.cache[name[i]] = template.Must(ts.base.ParseFiles(ts.dir+"/"+name[i]))
 	}
 	ts.Unlock()
 }
 
 func (ts *TemplateStore) Render(w http.ResponseWriter, name string, model interface{}) {
-	var t *template.Template
-	ts.RLock()
-	t, ok := ts.cache[name]
-	ts.RUnlock()
-	if !ok {
-		t = template.Must(ts.base.ParseFiles(ts.dir+"/base.html", ts.dir+"/"+name))
+
+	if t, ok := ts.cache[name]; !ok {
+		ts.cache[name] = template.Must(ts.base.ParseFiles(ts.dir+"/"+name))
+		t.Execute(w, model)
+		return
 	}
-	t.Execute(w, model)
+	if changed(ts.dir+"/"+name) {
+		t := template.Must(ts.base.ParseFiles(ts.dir+"/"+name))
+		ts.cache[name] = t
+		t.Execute(w, model)
+	}
+
 }
+
+func changed(path string) bool {
+	// gather file status
+	fstat, err := os.Stat(path)
+	// err check
+	if err != nil {
+		// if err; print timestamp and err, then panic
+		log.Panic(err)
+		return false
+	}
+	// no err; eval and return (true) file been modified within the last n seconds
+	return fstat.ModTime().Unix() >= time.Now().Unix() - 3
+}
+
+// func RenderNoBase(tmpl string) {
+// 	t = template.Must(template.New("tmpl").Funcs(ts.funcs).Parse(tmpl), err error)
+// }
 
 func ContentType(w http.ResponseWriter, typ string) {
 	w.Header().Set("Content Type", typ)
 }
-
-/*
-func (ts *TemplateEngine) ToString(name string, model interface{}) string {
-	var buf bytes.Buffer
-	ts.cache[name].Execute(&buf, model)
-	return buf.String()
-}
-
-func (ts *TemplateEngine) ToBytes(name string, model interface{}) []byte {
-	var buf bytes.Buffer
-	ts.cache[name].Execute(&buf, model)
-	return buf.Bytes()
-}
-*/

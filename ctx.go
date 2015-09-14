@@ -125,6 +125,7 @@ type Context struct {
 	items map[string]interface{}
 	path  map[string]string
 	flash []string
+	// add session related info map[string][]string or struct
 	auth  bool
 }
 
@@ -172,4 +173,12 @@ func (c *Context) SetAuth(ok bool) {
 
 func (c *Context) GetAuth() bool {
 	return c.auth
+}
+
+func (c *Context) CheckAuth(w http.ResponseWriter, r *http.Request, path string) {
+	if c.auth {
+		return
+	}
+	c.SetFlash("error", "Your are not logged in!")
+	http.Redirect(w, r, path, 303)
 }

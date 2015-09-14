@@ -1,9 +1,6 @@
 package web
 
-import (
-	"fmt"
-	"net/http"
-)
+import "net/http"
 
 type Mux struct {
 	routes []*Route
@@ -29,7 +26,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "OPTIONS" || r.URL.Path == "/favicon.ico" {
 		return
 	}
-	fmt.Println(r.URL.Path)
+	//fmt.Println(r.URL.Path)
 	for _, route := range m.routes {
 		if route.method == r.Method {
 			path := SliceString(r.URL.Path, '/')
