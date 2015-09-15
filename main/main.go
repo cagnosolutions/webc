@@ -9,6 +9,7 @@ import (
 
 func main() {
 	mux := MuxInstance()
+	mux.Handle("GET", "/", homeController)
 	mux.Handle("GET", "/user", user)
 	mux.Handle("GET", "/user/add", userAdd)
 	mux.Handle("GET", "/user/:id", userId)
@@ -19,6 +20,13 @@ func main() {
 	mux.Handle("GET", "/protected/:slug", protected)
 
 	http.ListenAndServe(":8080", mux)
+}
+
+func homeController(w http.ResponseWriter, r *http.Request, c *Context) {
+	err := RenderTemplate(w, "index.tmpl", nil)
+	if err != nil {
+		fmt.Fprintf(w, "%v", err)
+	}
 }
 
 func landing(w http.ResponseWriter, r *http.Request, c *Context) {
