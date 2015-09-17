@@ -1,37 +1,77 @@
 package web
 
-import "net/http"
+import (
+	"net/http"
+	"strings"
+)
 
-type Mux struct {
-	routes []*Route
-	ctx    *ContextStore
+type controller func(http.ResponseWriter, *http.Request, *Context)
+
+type route struct {
+	method string
+	path   []string
+	handle controller
 }
 
-func MuxInstance() *Mux {
-	return &Mux{
-		routes: make([]*Route, 0),
-		ctx:    ContextStoreInstance(HOUR / 2),
+var defaultMux = instance()
+
+func Get(path string, handler controller) {
+	defaultMux.handle("GET", path, handler)
+}
+
+func Put(path string, handler controller) {
+	defaultMux.handle("PUT", path, handler)
+}
+
+func Post(path string, handler controller) {
+	defaultMux.handle("Post", path, handler)
+}
+
+func Delete(path string, handler controller) {
+	defaultMux.handle("DELETE", path, handler)
+}
+
+func Serve(host string) {
+	defaultMux.ctx.gc()
+	if err := http.ListenAndServe(host, defaultMux); err != nil {
+		panic(err)
 	}
 }
 
-func (m *Mux) Handle(method, path string, controller Controller) {
-	m.routes = append(m.routes, RouteInstance(method, SliceString(path, '/'), controller, false))
+type mux struct {
+	routes []*route
+	ctx    *contextStore
 }
 
-func (m *Mux) SecureHandle(method, path string, controller Controller) {
-	m.routes = append(m.routes, RouteInstance(method, SliceString(path, '/'), controller, true))
+func instance() *mux {
+	return &mux{
+		routes: make([]*route, 0),
+		ctx:    &contextStore{contexts: make(map[string]*Context, 0)},
+	}
 }
 
-func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *mux) handle(method, path string, handler controller) {
+	m.routes = append(m.routes, &route{method, SliceString(path, '/'), handler})
+}
+
+func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	// for now: ignore options and favicon
 	if r.Method == "OPTIONS" || r.URL.Path == "/favicon.ico" {
 		return
 	}
-	//fmt.Println(r.URL.Path)
+
+	// handle static mapping
+	if r.Method == "GET" && strings.HasPrefix(r.URL.Path, "/static/") {
+		http.StripPrefix("/static/", http.FileServer(http.Dir("static")))
+		return
+	}
+
 	for _, route := range m.routes {
 		if route.method == r.Method {
 			path := SliceString(r.URL.Path, '/')
 			if pathVars, ok := match(path, route.path); ok {
-				ctx := m.ctx.GetContext(w, r)
+				ctx := m.ctx.get(w, r)
 				ctx.SetPathVars(pathVars)
 				route.handle(w, r, ctx)
 				return

@@ -4,5 +4,20 @@
     {{ template "navbar_index" }}
 {{ end }}
 {{ define "content" }}
-    <h1>content</h1>
+    <h1>User Info</h1>
+    <p>
+        {{ .name }}
+    </p>
+    <p>
+        {{ .age }}
+    </p>
+    <p>
+        {{ .email }}
+    </p>
+    <p>
+        {{ .data }}
+    </p>
+    <p>
+        {{ .da.name }}
+    </p>
 {{ end }}

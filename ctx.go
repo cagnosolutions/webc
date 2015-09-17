@@ -8,6 +8,7 @@ import (
 )
 
 var CTXID = "GOCTXID"
+var RATE int64 = HOUR / 2 // 30 min
 
 const (
 	MIN     = 60
@@ -19,23 +20,13 @@ const (
 	SESSION = 0
 )
 
-type ContextStore struct {
-	rate     int64
+type contextStore struct {
 	contexts map[string]*Context
 	sync.Mutex
 }
 
-func ContextStoreInstance(rate int64) *ContextStore {
-	ctxStore := &ContextStore{
-		rate:     rate,
-		contexts: make(map[string]*Context, 0),
-	}
-	ctxStore.GC()
-	return ctxStore
-}
-
-func (cs *ContextStore) GetContext(w http.ResponseWriter, r *http.Request) *Context {
-	uuid, ok := GetId(r)
+func (cs *contextStore) get(w http.ResponseWriter, r *http.Request) *Context {
+	uuid, ok := getId(r)
 	if ok { // uuid (cookie) found
 		cs.Lock()
 		if ctx, ok := cs.contexts[uuid]; ok {
@@ -45,52 +36,42 @@ func (cs *ContextStore) GetContext(w http.ResponseWriter, r *http.Request) *Cont
 			return ctx
 		}
 		// context dead, create new one based on uuid and return new context
-		ctx := FreshContext(uuid)
+		ctx := freshContext(uuid)
 		cs.contexts[uuid] = ctx
 		cs.Unlock()
 		return ctx
 	}
 	// uuid (cookie) not foud, create and set a new one
-	cookie := FreshCookie(uuid)
+	cookie := freshCookie(uuid)
 	http.SetCookie(w, &cookie)
 	// add or over-write any context with same uuid, and return context
 	cs.Lock()
-	ctx := FreshContext(uuid)
+	ctx := freshContext(uuid)
 	cs.contexts[uuid] = ctx
 	cs.Unlock()
 	return ctx
 }
 
-func (cs *ContextStore) Logout(w http.ResponseWriter, r *http.Request) {
-	uuid, ok := GetId(r)
-	if !ok {
-		return
-	}
-	cs.Lock()
-	delete(cs.contexts, uuid)
-	cs.Unlock()
-}
-
-func (cs *ContextStore) GC() {
+func (cs *contextStore) gc() {
 	cs.Lock()
 	defer cs.Unlock()
 	for uuid, ctx := range cs.contexts {
-		if (ctx.ts.Unix() + cs.rate) < time.Now().Unix() {
+		if (ctx.ts.Unix() + RATE) < time.Now().Unix() {
 			delete(cs.contexts, uuid)
 		} else {
 			break
 		}
 	}
-	time.AfterFunc(time.Duration(cs.rate)*time.Second, func() { cs.GC() })
+	time.AfterFunc(time.Duration(RATE)*time.Second, func() { cs.gc() })
 }
 
-func (cs *ContextStore) ViewContexts() {
+func (cs *contextStore) viewContexts() {
 	for k, v := range cs.contexts {
 		fmt.Printf("key: %v\nval: %v\n\n", k, v)
 	}
 }
 
-func GetId(r *http.Request) (string, bool) {
+func getId(r *http.Request) (string, bool) {
 	cookie, err := r.Cookie(CTXID)
 	if err != nil && err == http.ErrNoCookie || cookie.Value == "" {
 		return UUID4(), false
@@ -98,7 +79,7 @@ func GetId(r *http.Request) (string, bool) {
 	return cookie.Value, true
 }
 
-func FreshCookie(uuid string) http.Cookie {
+func freshCookie(uuid string) http.Cookie {
 	return http.Cookie{
 		Name:     CTXID,
 		Value:    uuid,
@@ -108,7 +89,7 @@ func FreshCookie(uuid string) http.Cookie {
 	}
 }
 
-func FreshContext(uuid string) *Context {
+func freshContext(uuid string) *Context {
 	return &Context{
 		uuid:  uuid,
 		ts:    time.Now(),
@@ -126,7 +107,7 @@ type Context struct {
 	path  map[string]string
 	flash []string
 	// add session related info map[string][]string or struct
-	auth  bool
+	auth bool
 }
 
 func (c *Context) SetPathVars(m map[string]string) {
