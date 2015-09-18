@@ -142,10 +142,19 @@ func (c *Context) SetFlash(k, msg string) {
 	c.flash = []string{k, msg}
 }
 
-func (c *Context) GetFlash() []string {
+func (c *Context) GetFlashSlice() []string {
 	flash := c.flash
 	c.flash = []string{}
 	return flash
+}
+
+func (c *Context) GetFlash() (string, string) {
+	flash := c.flash
+	c.flash = []string{}
+	if len(flash) == 2 {
+		return flash[0], flash[1]
+	}
+	return "", ""
 }
 
 func (c *Context) SetAuth(ok bool) {

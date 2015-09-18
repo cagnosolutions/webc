@@ -11,12 +11,18 @@ import (
 
 var defaultTemplateStore = instance()
 
+var PRODUCTION = true
+
 func Render(w http.ResponseWriter, name string, data Model) {
 	defaultTemplateStore.render(w, name, data)
 }
 
 func ContentType(w http.ResponseWriter, contentType string) {
 	w.Header().Set("Content-Type", contentType+"; charset=utf-8")
+}
+
+func Reload() {
+	defaultTemplateStore.load()
 }
 
 type Model map[string]interface{}
@@ -53,19 +59,31 @@ func (ts *templateStore) load() {
 
 	for _, layout := range layouts {
 		files := append(includes, layout)
+		ts.Lock()
 		ts.templates[filepath.Base(layout)] = template.Must(template.ParseFiles(files...))
+		ts.Unlock()
 	}
 
 }
 
 func (ts *templateStore) render(w http.ResponseWriter, name string, data Model) {
-	ts.RLock()
-	tmpl, ok := ts.templates[name]
-	ts.RUnlock()
-
-	if !ok {
-		http.Error(w, "404. Page not found", 404)
-		return
+	var tmpl *template.Template
+	if PRODUCTION {
+		var ok bool
+		ts.RLock()
+		tmpl, ok = ts.templates[name]
+		ts.RUnlock()
+		if !ok {
+			http.Error(w, "404. Page not found", 404)
+			return
+		}
+	} else {
+		includes, err := filepath.Glob("templates/includes/*.tmpl")
+		if err != nil {
+			log.Fatal(err)
+		}
+		files := append(includes, "templates/layouts/"+name)
+		tmpl = template.Must(template.ParseFiles(files...))
 	}
 
 	buf := ts.bufpool.get()
@@ -73,6 +91,7 @@ func (ts *templateStore) render(w http.ResponseWriter, name string, data Model) 
 
 	err := tmpl.ExecuteTemplate(buf, "base", data)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "500. Internal server error", 500)
 		return
 	}
