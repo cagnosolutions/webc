@@ -41,7 +41,7 @@ func TemplateStoreInstance(dir string, funcs map[string]func()) *TemplateStore {
 	ts := &TemplateStore{
 		dir: dir,
 		//base:  template.New("base.html"),
-		//base:  template.Must(template.ParseFiles(dir + "/base.html")),
+		base:  template.Must(template.ParseFiles(dir + "/base.html")),
 		cache: make(map[string]*template.Template),
 		funcs: template.FuncMap{
 			"title": strings.Title,
