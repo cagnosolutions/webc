@@ -13,48 +13,46 @@ type route struct {
 	handle controller
 }
 
-var defaultMux = instance()
-
-func Get(path string, handler controller) {
-	defaultMux.handle("GET", path, handler)
-}
-
-func Put(path string, handler controller) {
-	defaultMux.handle("PUT", path, handler)
-}
-
-func Post(path string, handler controller) {
-	defaultMux.handle("Post", path, handler)
-}
-
-func Delete(path string, handler controller) {
-	defaultMux.handle("DELETE", path, handler)
-}
-
-func Serve(host string) {
-	defaultMux.ctx.gc()
-	if err := http.ListenAndServe(host, defaultMux); err != nil {
-		panic(err)
-	}
-}
-
-type mux struct {
+type Mux struct {
 	routes []*route
 	ctx    *contextStore
 }
 
-func instance() *mux {
-	return &mux{
+func NewMux() *Mux {
+	return &Mux{
 		routes: make([]*route, 0),
 		ctx:    &contextStore{contexts: make(map[string]*Context, 0)},
 	}
 }
 
-func (m *mux) handle(method, path string, handler controller) {
+func (m *Mux) Serve(host string) {
+	m.ctx.gc()
+	if err := http.ListenAndServe(host, m); err != nil {
+		panic(err)
+	}
+}
+
+func (m *Mux) handle(method, path string, handler controller) {
 	m.routes = append(m.routes, &route{method, SliceString(path, '/'), handler})
 }
 
-func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (m *Mux) Get(path string, handler controller) {
+	m.handle("GET", path, handler)
+}
+
+func (m *Mux) Put(path string, handler controller) {
+	m.handle("PUT", path, handler)
+}
+
+func (m *Mux) Post(path string, handler controller) {
+	m.handle("Post", path, handler)
+}
+
+func (m *Mux) Delete(path string, handler controller) {
+	m.handle("DELETE", path, handler)
+}
+
+func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// for now: ignore options and favicon
 	if r.Method == "OPTIONS" || r.URL.Path == "/favicon.ico" {
@@ -80,6 +78,22 @@ func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	return
 }
+
+// func match(req []string, pat []string) (map[string]string, bool) {
+// 	vals := make(map[string]string)
+// 	if len(req) != len(pat) {
+// 		return nil, false
+// 	}
+// 	for i, v := range pat {
+// 		if v != req[i] {
+// 			if v[0] == ':' {
+// 				vals[v[1:len(v)]] = req[i]
+// 			} else {
+// 				return nil, false
+// 			}
+// 		}
+// 	}
+// }
 
 func match(req []string, pat []string) (map[string]string, bool) {
 	v := make(map[string]string)

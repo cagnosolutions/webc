@@ -7,8 +7,8 @@ import (
 	"time"
 )
 
-var CTXID = "GOCTXID"
-var RATE int64 = HOUR / 2 // 30 min
+//var CTXID = "GOCTXID"
+//var RATE int64 = HOUR / 2 // 30 min
 
 const (
 	MIN     = 60
@@ -22,11 +22,13 @@ const (
 
 type contextStore struct {
 	contexts map[string]*Context
+	ctxid string
+	rate int64
 	sync.Mutex
 }
 
 func (cs *contextStore) get(w http.ResponseWriter, r *http.Request) *Context {
-	uuid, ok := getId(r)
+	uuid, ok := cs.getId(r)
 	if ok { // uuid (cookie) found
 		cs.Lock()
 		if ctx, ok := cs.contexts[uuid]; ok {
@@ -42,7 +44,7 @@ func (cs *contextStore) get(w http.ResponseWriter, r *http.Request) *Context {
 		return ctx
 	}
 	// uuid (cookie) not foud, create and set a new one
-	cookie := freshCookie(uuid)
+	cookie := cs.freshCookie(uuid)
 	http.SetCookie(w, &cookie)
 	// add or over-write any context with same uuid, and return context
 	cs.Lock()
@@ -56,13 +58,13 @@ func (cs *contextStore) gc() {
 	cs.Lock()
 	defer cs.Unlock()
 	for uuid, ctx := range cs.contexts {
-		if (ctx.ts.Unix() + RATE) < time.Now().Unix() {
+		if (ctx.ts.Unix() + cs.rate) < time.Now().Unix() {
 			delete(cs.contexts, uuid)
 		} else {
 			break
 		}
 	}
-	time.AfterFunc(time.Duration(RATE)*time.Second, func() { cs.gc() })
+	time.AfterFunc(time.Duration(cs.rate)*time.Second, func() { cs.gc() })
 }
 
 func (cs *contextStore) viewContexts() {
@@ -71,17 +73,17 @@ func (cs *contextStore) viewContexts() {
 	}
 }
 
-func getId(r *http.Request) (string, bool) {
-	cookie, err := r.Cookie(CTXID)
+func (cs *contextStore) getId(r *http.Request) (string, bool) {
+	cookie, err := r.Cookie(cs.ctxid)
 	if err != nil && err == http.ErrNoCookie || cookie.Value == "" {
 		return UUID4(), false
 	}
 	return cookie.Value, true
 }
 
-func freshCookie(uuid string) http.Cookie {
+func (cs *contextStore) freshCookie(uuid string) http.Cookie {
 	return http.Cookie{
-		Name:     CTXID,
+		Name:     cs.ctxid,
 		Value:    uuid,
 		Path:     "/",
 		Expires:  time.Now().AddDate(3, 0, 0), // 3 years in the future

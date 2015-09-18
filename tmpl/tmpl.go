@@ -9,44 +9,29 @@ import (
 	"sync"
 )
 
-var defaultTemplateStore = instance()
-
-var PRODUCTION = true
-
-func Render(w http.ResponseWriter, name string, data Model) {
-	defaultTemplateStore.render(w, name, data)
-}
-
-func ContentType(w http.ResponseWriter, contentType string) {
-	w.Header().Set("Content-Type", contentType+"; charset=utf-8")
-}
-
-func Reload() {
-	defaultTemplateStore.load()
-}
-
 type Model map[string]interface{}
 
-type templateStore struct {
-	templates map[string]*template.Template
-	bufpool   *bufferPool
+type TemplateStore struct {
+	templates   map[string]*template.Template
+	bufpool     *bufferPool
+	Development bool
 	//funcs       template.FuncMap
 	sync.RWMutex
 }
 
-func instance() *templateStore {
-	t := &templateStore{
+func NewTemplateStore() *TemplateStore {
+	t := &TemplateStore{
 		templates: make(map[string]*template.Template),
 		bufpool: &bufferPool{
 			ch: make(chan *bytes.Buffer, 64),
 		},
 		//funcs:       defaultFuncMap,
 	}
-	t.load()
+	t.Load()
 	return t
 }
 
-func (ts *templateStore) load() {
+func (ts *TemplateStore) Load() {
 	layouts, err := filepath.Glob("templates/layouts/*.tmpl")
 	if err != nil {
 		log.Fatal(err)
@@ -66,9 +51,16 @@ func (ts *templateStore) load() {
 
 }
 
-func (ts *templateStore) render(w http.ResponseWriter, name string, data Model) {
+func (ts *TemplateStore) Render(w http.ResponseWriter, name string, data Model) {
 	var tmpl *template.Template
-	if PRODUCTION {
+	if ts.Development {
+		includes, err := filepath.Glob("templates/includes/*.tmpl")
+		if err != nil {
+			log.Fatal(err)
+		}
+		files := append(includes, "templates/layouts/"+name)
+		tmpl = template.Must(template.ParseFiles(files...))
+	} else {
 		var ok bool
 		ts.RLock()
 		tmpl, ok = ts.templates[name]
@@ -77,13 +69,6 @@ func (ts *templateStore) render(w http.ResponseWriter, name string, data Model) 
 			http.Error(w, "404. Page not found", 404)
 			return
 		}
-	} else {
-		includes, err := filepath.Glob("templates/includes/*.tmpl")
-		if err != nil {
-			log.Fatal(err)
-		}
-		files := append(includes, "templates/layouts/"+name)
-		tmpl = template.Must(template.ParseFiles(files...))
 	}
 
 	buf := ts.bufpool.get()
@@ -99,4 +84,8 @@ func (ts *templateStore) render(w http.ResponseWriter, name string, data Model) 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	buf.WriteTo(w)
 	return
+}
+
+func ContentType(w http.ResponseWriter, contentType string) {
+	w.Header().Set("Content-Type", contentType+"; charset=utf-8")
 }
