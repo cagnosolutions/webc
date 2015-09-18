@@ -1,14 +1,14 @@
 package web
 
 import (
+	"fmt"
 	"html/template"
+	"log"
 	"net/http"
+	"os"
 	"strings"
 	"sync"
 	"time"
-	"fmt"
-	"os"
-	"log"
 )
 
 type M map[string]interface{}
@@ -39,9 +39,9 @@ type TemplateStore struct {
 
 func TemplateStoreInstance(dir string, funcs map[string]func()) *TemplateStore {
 	ts := &TemplateStore{
-		dir:   dir,
+		dir: dir,
 		//base:  template.New("base.html"),
-		base: template.Must(template.ParseFiles(dir+"/base.html")),
+		//base:  template.Must(template.ParseFiles(dir + "/base.html")),
 		cache: make(map[string]*template.Template),
 		funcs: template.FuncMap{
 			"title": strings.Title,
@@ -67,7 +67,7 @@ func (ts *TemplateStore) Cache(name ...string) {
 	for i := 0; i < len(name); i++ {
 		fmt.Printf("Cacheing %s\n", name[i])
 		//ts.cache[name[i]] = template.Must(ts.base.ParseFiles(ts.dir+"/base.html", ts.dir+"/"+name[i]))
-		ts.cache[name[i]] = template.Must(ts.base.ParseFiles(ts.dir+"/"+name[i]))
+		ts.cache[name[i]] = template.Must(ts.base.ParseFiles(ts.dir + "/" + name[i]))
 	}
 	ts.Unlock()
 }
@@ -76,23 +76,23 @@ func (ts *TemplateStore) Render(w http.ResponseWriter, name string, model interf
 	t1 := time.Now().UnixNano()
 	t, ok := ts.cache[name]
 	if !ok {
-		t = template.Must(ts.base.ParseFiles(ts.dir+"/"+name))
+		t = template.Must(ts.base.ParseFiles(ts.dir + "/" + name))
 		ts.cache[name] = t
 		t.Execute(w, model)
-		fmt.Printf("Took %d ns\n", time.Now().UnixNano() - t1)
+		fmt.Printf("Took %d ns\n", time.Now().UnixNano()-t1)
 		fmt.Println("1")
 		return
 	}
-	if changed(ts.dir+"/"+name) {
+	if changed(ts.dir + "/" + name) {
 		t = template.Must(template.ParseFiles(ts.dir+"/base.html", ts.dir+"/"+name))
 		ts.cache[name] = t
 		t.Execute(w, model)
-		fmt.Printf("Took %d ns\n", time.Now().UnixNano() - t1)
+		fmt.Printf("Took %d ns\n", time.Now().UnixNano()-t1)
 		fmt.Println("2")
 		return
 	}
 	t.Execute(w, model)
-	fmt.Printf("Took %d ns\n", time.Now().UnixNano() - t1)
+	fmt.Printf("Took %d ns\n", time.Now().UnixNano()-t1)
 	fmt.Println("3")
 }
 
@@ -106,8 +106,8 @@ func changed(path string) bool {
 		return false
 	}
 	// no err; eval and return (true) file been modified within the last n seconds
-	fmt.Printf("file time: %d, now - 3s %d\n", fstat.ModTime().Unix(), time.Now().Unix() - 3)
-	return fstat.ModTime().Unix() >= time.Now().Unix() - 3
+	fmt.Printf("file time: %d, now - 3s %d\n", fstat.ModTime().Unix(), time.Now().Unix()-3)
+	return fstat.ModTime().Unix() >= time.Now().Unix()-3
 }
 
 // func RenderNoBase(tmpl string) {
