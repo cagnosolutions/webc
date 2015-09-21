@@ -37,3 +37,22 @@ func SliceString(s string, b byte) []string {
 	}
 	return ss
 }
+
+/*
+func SliceString(s string, b byte) []string {
+	var ss []string
+	if len(s) > 1 {
+		i := bytes.IndexByte([]byte(s), b)
+		for ; i > -1; i = bytes.IndexByte([]byte(s), b) {
+			if i > 0 {
+				ss = append(ss, s[0:i])
+			}
+			s = s[i+1 : len(s)]
+		}
+		ss = append(ss, s[0:len(s)])
+	} else {
+		ss = append(ss, s)
+	}
+	return ss
+}
+*/

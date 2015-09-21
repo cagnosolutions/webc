@@ -11,21 +11,24 @@ import (
 
 func main() {
 	//defer profile.Start(profile.CPUProfile).Stop()
-	web.Get("/", homeController)
-	web.Get("/user", user)
-	web.Get("/user/add", userAdd)
-	web.Get("/user/:id", userId)
-	web.Get("/reload", reloadTemplates)
-	web.Get("/:slug", landing)
-	web.Get("/login/:slug", multiLogin)
-	web.Get("/logout/:slug", logout)
-	web.Get("/protected/:slug", protected)
-	web.Serve(":8080")
+	mux := web.NewMux("CTXID", (web.HOUR / 2))
+	mux.Get("/", homeController)
+	mux.Get("/user", user)
+	mux.Get("/user/add", userAdd)
+	mux.Get("/user/:id", userId)
+	mux.Get("/reload", reloadTemplates)
+	mux.Get("/:slug", landing)
+	mux.Get("/login/:slug", multiLogin)
+	mux.Get("/logout/:slug", logout)
+	mux.Get("/protected/:slug", protected)
+	mux.Serve(":8080")
 }
+
+var ts = tmpl.NewTemplateStore(true)
 
 func homeController(w http.ResponseWriter, r *http.Request, c *web.Context) {
 	msgK, msgV := c.GetFlash()
-	tmpl.Render(w, "index.tmpl", tmpl.Model{
+	ts.Render(w, "index.tmpl", tmpl.Model{
 		msgK:    msgV,
 		"name":  "Greg",
 		"age":   28,
@@ -75,7 +78,7 @@ func userId(w http.ResponseWriter, r *http.Request, c *web.Context) {
 
 func reloadTemplates(w http.ResponseWriter, r *http.Request, c *web.Context) {
 	if r.FormValue("user") == "admin" && r.FormValue("pass") == "admin" {
-		tmpl.Reload()
+		ts.Load()
 		c.SetFlash("alertSuccess", "Successfully reloaded templates")
 	}
 	http.Redirect(w, r, "/", 303)

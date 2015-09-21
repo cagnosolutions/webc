@@ -22,9 +22,18 @@ const (
 
 type contextStore struct {
 	contexts map[string]*Context
-	ctxid string
-	rate int64
+	Ctxid    string
+	Rate     int64
 	sync.Mutex
+}
+
+func NewContextStore(ctxid string, rate int64) *contextStore {
+	c := &contextStore {
+		contexts: make(map[string]*Context),
+		Ctxid: ctxid,
+		Rate: rate,
+	}
+	return c
 }
 
 func (cs *contextStore) get(w http.ResponseWriter, r *http.Request) *Context {
@@ -58,13 +67,13 @@ func (cs *contextStore) gc() {
 	cs.Lock()
 	defer cs.Unlock()
 	for uuid, ctx := range cs.contexts {
-		if (ctx.ts.Unix() + cs.rate) < time.Now().Unix() {
+		if (ctx.ts.Unix() + cs.Rate) < time.Now().Unix() {
 			delete(cs.contexts, uuid)
 		} else {
 			break
 		}
 	}
-	time.AfterFunc(time.Duration(cs.rate)*time.Second, func() { cs.gc() })
+	time.AfterFunc(time.Duration(cs.Rate)*time.Second, func() { cs.gc() })
 }
 
 func (cs *contextStore) viewContexts() {
@@ -74,7 +83,7 @@ func (cs *contextStore) viewContexts() {
 }
 
 func (cs *contextStore) getId(r *http.Request) (string, bool) {
-	cookie, err := r.Cookie(cs.ctxid)
+	cookie, err := r.Cookie(cs.Ctxid)
 	if err != nil && err == http.ErrNoCookie || cookie.Value == "" {
 		return UUID4(), false
 	}
@@ -83,7 +92,7 @@ func (cs *contextStore) getId(r *http.Request) (string, bool) {
 
 func (cs *contextStore) freshCookie(uuid string) http.Cookie {
 	return http.Cookie{
-		Name:     cs.ctxid,
+		Name:     cs.Ctxid,
 		Value:    uuid,
 		Path:     "/",
 		Expires:  time.Now().AddDate(3, 0, 0), // 3 years in the future

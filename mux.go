@@ -18,10 +18,10 @@ type Mux struct {
 	ctx    *contextStore
 }
 
-func NewMux() *Mux {
+func NewMux(ctxid string, rate int64) *Mux {
 	return &Mux{
 		routes: make([]*route, 0),
-		ctx:    &contextStore{contexts: make(map[string]*Context, 0)},
+		ctx:    NewContextStore(ctxid, rate),
 	}
 }
 
@@ -79,21 +79,23 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// func match(req []string, pat []string) (map[string]string, bool) {
-// 	vals := make(map[string]string)
-// 	if len(req) != len(pat) {
-// 		return nil, false
-// 	}
-// 	for i, v := range pat {
-// 		if v != req[i] {
-// 			if v[0] == ':' {
-// 				vals[v[1:len(v)]] = req[i]
-// 			} else {
-// 				return nil, false
-// 			}
-// 		}
-// 	}
-// }
+/*
+func match(req []string, pat []string) (map[string]string, bool) {
+	vals := make(map[string]string)
+	if len(req) != len(pat) {
+		return nil, false
+	}
+	for i, v := range pat {
+		if v[0] == ':' {
+			vals[v[1:len(v)]] = req[i]
+		} else if v != req[i] {
+			return nil, false
+		}
+	}
+
+	return vals, true
+}
+*/
 
 func match(req []string, pat []string) (map[string]string, bool) {
 	v := make(map[string]string)
