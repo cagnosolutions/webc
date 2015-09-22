@@ -16,12 +16,14 @@ type route struct {
 type Mux struct {
 	routes []*route
 	ctx    *contextStore
+	static http.Handler
 }
 
 func NewMux(ctxid string, rate int64) *Mux {
 	return &Mux{
 		routes: make([]*route, 0),
 		ctx:    NewContextStore(ctxid, rate),
+		static: http.StripPrefix("/static/", http.FileServer(http.Dir("static"))),
 	}
 }
 
@@ -59,9 +61,9 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// handle static mapping
+	 //handle static mapping
 	if r.Method == "GET" && strings.HasPrefix(r.URL.Path, "/static/") {
-		http.StripPrefix("/static/", http.FileServer(http.Dir("static")))
+		m.static.ServeHTTP(w,r)
 		return
 	}
 

@@ -21,6 +21,7 @@ func main() {
 	mux.Get("/login/:slug", multiLogin)
 	mux.Get("/logout/:slug", logout)
 	mux.Get("/protected/:slug", protected)
+	fmt.Println("running...")
 	mux.Serve(":8080")
 }
 
