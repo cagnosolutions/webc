@@ -47,7 +47,7 @@ func (m *Mux) Put(path string, handler controller) {
 }
 
 func (m *Mux) Post(path string, handler controller) {
-	m.handle("Post", path, handler)
+	m.handle("POST", path, handler)
 }
 
 func (m *Mux) Delete(path string, handler controller) {
@@ -61,9 +61,9 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	 //handle static mapping
+	//handle static mapping
 	if r.Method == "GET" && strings.HasPrefix(r.URL.Path, "/static/") {
-		m.static.ServeHTTP(w,r)
+		m.static.ServeHTTP(w, r)
 		return
 	}
 

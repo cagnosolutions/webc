@@ -16,7 +16,7 @@ func main() {
 	mux.Get("/user", user)
 	mux.Get("/user/add", userAdd)
 	mux.Get("/user/:id", userId)
-	mux.Get("/reload", reloadTemplates)
+	mux.Get("/reload", reloadTempla
 	mux.Get("/:slug", landing)
 	mux.Get("/login/:slug", multiLogin)
 	mux.Get("/logout/:slug", logout)
