@@ -7,9 +7,6 @@ import (
 	"time"
 )
 
-//var CTXID = "GOCTXID"
-//var RATE int64 = HOUR / 2 // 30 min
-
 const (
 	MIN     = 60
 	HOUR    = MIN * 60
@@ -107,7 +104,8 @@ func freshContext(uuid string) *Context {
 		items: make(map[string]interface{}, 0),
 		path:  make(map[string]string, 0),
 		flash: make([]string, 0),
-		auth:  false,
+		session: make(map[string]interface{}, 0),
+		role:  "",
 	}
 }
 
@@ -117,8 +115,8 @@ type Context struct {
 	items map[string]interface{}
 	path  map[string]string
 	flash []string
-	// add session related info map[string][]string or struct
-	auth bool
+	session map[string]interface{}
+	role string
 }
 
 func (c *Context) SetPathVars(m map[string]string) {
@@ -168,18 +166,39 @@ func (c *Context) GetFlash() (string, string) {
 	return "", ""
 }
 
-func (c *Context) SetAuth(ok bool) {
-	c.auth = ok
+func (c *Context) GetSession() map[string]interface{} {
+	return c.session
 }
 
-func (c *Context) GetAuth() bool {
-	return c.auth
+func (c *Context) GetFromSession(key string) interface{} {
+	return c.session[key]
 }
 
-func (c *Context) CheckAuth(w http.ResponseWriter, r *http.Request, path string) {
-	if c.auth {
+func (c *Context) SetToSession(key string, val interface{}) {
+	c.session[key] = val
+}
+
+func (c *Context) SetRole(role string) {
+	c.role = role
+}
+
+func (c *Context) GetRole() string {
+	return c.role
+}
+
+func (c *Context) CheckAuth(w http.ResponseWriter, r *http.Request, requiredRole string, path string) {
+	if c.role == requiredRole {
 		return
 	}
-	c.SetFlash("error", "Your are not logged in!")
+	c.SetFlash("alertError", "Your are not logged in!")
 	http.Redirect(w, r, path, 303)
+}
+
+func (c *Context) Login(role string) {
+	c.role = role
+}
+
+func (c *Context) Logout() {
+	c.session = make(map[string]interface{}, 0)
+	c.role = ""
 }

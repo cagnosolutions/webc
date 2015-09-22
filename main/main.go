@@ -13,10 +13,11 @@ func main() {
 	//defer profile.Start(profile.CPUProfile).Stop()
 	mux := web.NewMux("CTXID", (web.HOUR / 2))
 	mux.Get("/", homeController)
-	mux.Get("/user", user)
-	mux.Get("/user/add", userAdd)
-	mux.Get("/user/:id", userId)
-	mux.Get("/reload", reloadTempla
+	mux.Get("/admin", admin)
+	mux.Get("/admin/login", adminLogin)
+	mux.Get("/admin/add", adminAdd)
+	mux.Get("/admin/:id", adminId)
+	mux.Get("/reload", reloadTemplates)
 	mux.Get("/:slug", landing)
 	mux.Get("/login/:slug", multiLogin)
 	mux.Get("/logout/:slug", logout)
@@ -46,34 +47,43 @@ func landing(w http.ResponseWriter, r *http.Request, c *web.Context) {
 
 func multiLogin(w http.ResponseWriter, r *http.Request, c *web.Context) {
 	slug := c.GetPathVar("slug")
-	c.SetAuth(true)
+	c.Login("driver")
 	c.SetFlash("success", "You are now logged into "+slug+". Enjoy")
 	http.Redirect(w, r, "/"+slug, 303)
 }
 
 func logout(w http.ResponseWriter, r *http.Request, c *web.Context) {
 	slug := c.GetPathVar("slug")
-	c.SetAuth(false)
+	c.Logout()
 	c.SetFlash("success", "You are now logged out. Thanks for visiting")
 	http.Redirect(w, r, "/"+slug, 303)
 }
 
 func protected(w http.ResponseWriter, r *http.Request, c *web.Context) {
 	slug := c.GetPathVar("slug")
-	c.CheckAuth(w, r, "/"+slug)
+	c.CheckAuth(w, r, "driver", "/"+slug)
 	fmt.Fprintf(w, "You are authorized to view page %s", slug)
 }
 
-func user(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func admin(w http.ResponseWriter, r *http.Request, c *web.Context) {
+	c.CheckAuth(w, r, "admin", "/")
 	fmt.Fprintf(w, "page: user, addr: %s, user-agent: %s", r.RemoteAddr, r.UserAgent())
 	return
 }
 
-func userAdd(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func adminLogin(w http.ResponseWriter, r *http.Request, c *web.Context) {
+	c.Login("admin")
+	c.SetFlash("success", "You are now logged into. Enjoy")
+	http.Redirect(w, r, "/admin", 303)
+}
+
+func adminAdd(w http.ResponseWriter, r *http.Request, c *web.Context) {
+	c.CheckAuth(w, r, "admin", "/")
 	fmt.Fprintf(w, "User Add Page")
 }
 
-func userId(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func adminId(w http.ResponseWriter, r *http.Request, c *web.Context) {
+	c.CheckAuth(w, r, "admin", "/")
 	fmt.Fprintf(w, "user id: %v", c.GetPathVar("id"))
 }
 
