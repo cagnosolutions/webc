@@ -170,6 +170,10 @@ func (c *Context) GetSession() map[string]interface{} {
 	return c.session
 }
 
+func (c *Context) SetSession(session map[string]interface{}) {
+	c.session = session
+}
+
 func (c *Context) GetFromSession(key string) interface{} {
 	return c.session[key]
 }
