@@ -190,12 +190,13 @@ func (c *Context) GetRole() string {
 	return c.role
 }
 
-func (c *Context) CheckAuth(w http.ResponseWriter, r *http.Request, requiredRole string, path string) {
+func (c *Context) CheckAuth(w http.ResponseWriter, r *http.Request, requiredRole string, path string) bool {
 	if c.role == requiredRole {
-		return
+		return true
 	}
 	c.SetFlash("alertError", "Your are not logged in!")
 	http.Redirect(w, r, path, 303)
+	return false
 }
 
 func (c *Context) Login(role string) {
