@@ -1,12 +1,12 @@
-package web
+package util
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
 	"log"
 	"net/http"
-	"bytes"
 )
 
 func GetUser(r *http.Request) string {
@@ -27,9 +27,9 @@ func SliceString(s string, b byte) []string {
 	var ss []string
 	if len(s) > 1 {
 		i := bytes.IndexByte([]byte(s), b)
-		for ; i > -1; i = bytes.IndexByte([]byte(s), b){
-			ss = append(ss, s[0: i])
-			s = s[i+1: len(s)]
+		for ; i > -1; i = bytes.IndexByte([]byte(s), b) {
+			ss = append(ss, s[0:i])
+			s = s[i+1 : len(s)]
 		}
 		ss = append(ss, s[0:len(s)])
 	} else {

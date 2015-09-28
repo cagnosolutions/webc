@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 	"strings"
+	"github.com/cagnosolutions/web/util"
 )
 
 type controller func(http.ResponseWriter, *http.Request, *Context)
@@ -35,7 +36,7 @@ func (m *Mux) Serve(host string) {
 }
 
 func (m *Mux) handle(method, path string, handler controller) {
-	m.routes = append(m.routes, &route{method, SliceString(path, '/'), handler})
+	m.routes = append(m.routes, &route{method, util.SliceString(path, '/'), handler})
 }
 
 func (m *Mux) Get(path string, handler controller) {
@@ -69,7 +70,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	for _, route := range m.routes {
 		if route.method == r.Method {
-			path := SliceString(r.URL.Path, '/')
+			path := util.SliceString(r.URL.Path, '/')
 			if pathVars, ok := match(path, route.path); ok {
 				ctx := m.ctx.get(w, r)
 				ctx.SetPathVars(pathVars)

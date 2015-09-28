@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/cagnosolutions/web/util"
 )
 
 const (
@@ -25,10 +27,10 @@ type contextStore struct {
 }
 
 func NewContextStore(ctxid string, rate int64) *contextStore {
-	c := &contextStore {
+	c := &contextStore{
 		contexts: make(map[string]*Context),
-		Ctxid: ctxid,
-		Rate: rate,
+		Ctxid:    ctxid,
+		Rate:     rate,
 	}
 	return c
 }
@@ -82,7 +84,7 @@ func (cs *contextStore) viewContexts() {
 func (cs *contextStore) getId(r *http.Request) (string, bool) {
 	cookie, err := r.Cookie(cs.Ctxid)
 	if err != nil && err == http.ErrNoCookie || cookie.Value == "" {
-		return UUID4(), false
+		return util.UUID4(), false
 	}
 	return cookie.Value, true
 }
@@ -99,24 +101,24 @@ func (cs *contextStore) freshCookie(uuid string) http.Cookie {
 
 func freshContext(uuid string) *Context {
 	return &Context{
-		uuid:  uuid,
-		ts:    time.Now(),
-		items: make(map[string]interface{}, 0),
-		path:  make(map[string]string, 0),
-		flash: make([]string, 0),
+		uuid:    uuid,
+		ts:      time.Now(),
+		items:   make(map[string]interface{}, 0),
+		path:    make(map[string]string, 0),
+		flash:   make([]string, 0),
 		session: make(map[string]interface{}, 0),
-		role:  "",
+		role:    "",
 	}
 }
 
 type Context struct {
-	uuid  string
-	ts    time.Time
-	items map[string]interface{}
-	path  map[string]string
-	flash []string
+	uuid    string
+	ts      time.Time
+	items   map[string]interface{}
+	path    map[string]string
+	flash   []string
 	session map[string]interface{}
-	role string
+	role    string
 }
 
 func (c *Context) SetPathVars(m map[string]string) {
