@@ -17,7 +17,7 @@ func FormToStruct(ptr interface{}, vals url.Values, start string) {
 	strctType := strct.Type()
 	for i := 0; i < strct.NumField(); i++ {
 		fld := strct.Field(i)
-		if vals.Get(start+strctType.Field(i).Name) != "" || fld.Kind() == reflect.Struct {
+		if vals.Get(ToLowerFirst(start+strctType.Field(i).Name)) != "" || fld.Kind() == reflect.Struct {
 			switch fld.Kind() {
 			case reflect.String:
 				strct.Field(i).SetString(vals.Get(start + ToLowerFirst(strctType.Field(i).Name)))
