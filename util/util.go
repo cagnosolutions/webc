@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 )
 
 func GetUser(r *http.Request) string {
@@ -36,6 +37,10 @@ func SliceString(s string, b byte) []string {
 		ss = append(ss, s)
 	}
 	return ss
+}
+
+func ToLowerFirst(s string) string {
+	return strings.ToLower(string(s[0])) + s[1:len(s)]
 }
 
 /*

@@ -7,33 +7,42 @@ import (
 	"strings"
 )
 
-func FormToStruct(stuff interface{}, v url.Values) {
-	s := reflect.ValueOf(stuff).Elem()
-	typeOfT := s.Type()
-	for i := 0; i < s.NumField(); i++ {
-		f := s.Field(i)
-		switch f.Kind() {
-		case reflect.String:
-			s.Field(i).SetString(v.Get(typeOfT.Field(i).Name))
-		case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-			in, _ := strconv.ParseInt(v.Get(typeOfT.Field(i).Name), 10, 64)
-			s.Field(i).SetInt(in)
-		case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-			u, _ := strconv.ParseUint(v.Get(typeOfT.Field(i).Name), 10, 64)
-			s.Field(i).SetUint(u)
-		case reflect.Float32, reflect.Float64:
-			f, _ := strconv.ParseFloat(v.Get(typeOfT.Field(i).Name), 64)
-			s.Field(i).SetFloat(f)
-		case reflect.Bool:
-			b, _ := strconv.ParseBool(v.Get(typeOfT.Field(i).Name))
-			s.Field(i).SetBool(b)
-		case reflect.Map:
-			s.Field(i).Set(reflect.MakeMap(s.Field(i).Type()))
-		case reflect.Slice:
-			ss := reflect.MakeSlice(s.Field(i).Type(), 0, 0)
-			s.Field(i).Set(genSlice(ss, v.Get(typeOfT.Field(i).Name)))
-		case reflect.Struct:
-			s.Field(i).Set(reflect.Indirect(reflect.New(s.Field(i).Type())))
+func FormToStruct(ptr interface{}, vals url.Values, start string) {
+	var strct reflect.Value
+	if reflect.TypeOf(ptr) == reflect.TypeOf(reflect.Value{}) {
+		strct = ptr.(reflect.Value)
+	} else {
+		strct = reflect.ValueOf(ptr).Elem()
+	}
+	strctType := strct.Type()
+	for i := 0; i < strct.NumField(); i++ {
+		fld := strct.Field(i)
+		if vals.Get(start+strctType.Field(i).Name) != "" || fld.Kind() == reflect.Struct {
+			switch fld.Kind() {
+			case reflect.String:
+				strct.Field(i).SetString(vals.Get(start + ToLowerFirst(strctType.Field(i).Name)))
+			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+				in, _ := strconv.ParseInt(vals.Get(start+ToLowerFirst(strctType.Field(i).Name)), 10, 64)
+				strct.Field(i).SetInt(in)
+			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+				u, _ := strconv.ParseUint(vals.Get(start+ToLowerFirst(strctType.Field(i).Name)), 10, 64)
+				strct.Field(i).SetUint(u)
+			case reflect.Float32, reflect.Float64:
+				f, _ := strconv.ParseFloat(vals.Get(start+ToLowerFirst(strctType.Field(i).Name)), 64)
+				strct.Field(i).SetFloat(f)
+			case reflect.Bool:
+				b, _ := strconv.ParseBool(vals.Get(start + ToLowerFirst(strctType.Field(i).Name)))
+				strct.Field(i).SetBool(b)
+			case reflect.Map:
+				strct.Field(i).Set(reflect.MakeMap(strct.Field(i).Type()))
+			case reflect.Slice:
+				ss := reflect.MakeSlice(strct.Field(i).Type(), 0, 0)
+				strct.Field(i).Set(genSlice(ss, vals.Get(start+ToLowerFirst(strctType.Field(i).Name))))
+			case reflect.Struct:
+				st := reflect.Indirect(reflect.New(strct.Field(i).Type()))
+				FormToStruct(st, vals, start+ToLowerFirst(strctType.Field(i).Name)+".")
+				strct.Field(i).Set(st)
+			}
 		}
 	}
 }
