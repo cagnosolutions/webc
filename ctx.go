@@ -192,12 +192,22 @@ func (c *Context) GetRole() string {
 	return c.role
 }
 
-func (c *Context) CheckAuth(w http.ResponseWriter, r *http.Request, requiredRole string, path string) bool {
-	if c.role == requiredRole {
+func (c *Context) CheckAuth(w http.ResponseWriter, r *http.Request, path string, requiredRoles ...string) bool {
+	if len(requiredRoles) < 1 {
 		return true
 	}
-	c.SetFlash("alertError", "Your are not logged in!")
-	http.Redirect(w, r, path, 303)
+	if c.role == "" {
+		c.SetFlash("alertError", "Your are not logged in!")
+		http.Redirect(w, r, path, 303)
+		return false
+	}
+	for _, role := range requiredRoles {
+		if c.role == role {
+			return true
+		}
+	}
+	c.SetFlash("alertError", "You are not authorized")
+	http.Redirect(w, r, "/", 303)
 	return false
 }
 

@@ -37,6 +37,7 @@ func NewTemplateStore(development bool) *TemplateStore {
 			"decr":  func(a int) int { return a - 1 },
 			"incr":  func(a int) int { return a + 1 },
 			"split": strings.Split,
+			"map": func(a map[string]string, b string) interface{} { return a[b] },
 		},
 	}
 	t.Load()
@@ -53,11 +54,10 @@ func (ts *TemplateStore) Load() {
 	if err != nil {
 		log.Fatal(err)
 	}
-
 	for _, layout := range layouts {
 		files := append(includes, layout)
 		ts.Lock()
-		ts.templates[filepath.Base(layout)] = template.Must(template.ParseFiles(files...)).Funcs(ts.funcs)
+		ts.templates[filepath.Base(layout)] = template.Must(template.New("func").Funcs(ts.funcs).ParseFiles(files...))
 		ts.Unlock()
 	}
 
@@ -71,7 +71,7 @@ func (ts *TemplateStore) Render(w http.ResponseWriter, name string, data Model) 
 			log.Fatal(err)
 		}
 		files := append(includes, ts.TemplateDir +  "layouts/"+name)
-		tmpl = template.Must(template.ParseFiles(files...)).Funcs(ts.funcs)
+		tmpl = template.Must(template.New("func").Funcs(ts.funcs).ParseFiles(files...))
 	} else {
 		var ok bool
 		ts.RLock()
