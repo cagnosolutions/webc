@@ -2,12 +2,13 @@ package tmpl
 
 import (
 	"bytes"
+	"encoding/json"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
-	"sync"
 	"strings"
+	"sync"
 )
 
 type Model map[string]interface{}
@@ -28,7 +29,7 @@ func NewTemplateStore(development bool) *TemplateStore {
 			ch: make(chan *bytes.Buffer, 64),
 		},
 		TemplateDir: "templates/",
-		Development : development,
+		Development: development,
 		funcs: template.FuncMap{
 			"title": strings.Title,
 			"safe":  func(html string) template.HTML { return template.HTML(html) },
@@ -37,7 +38,14 @@ func NewTemplateStore(development bool) *TemplateStore {
 			"decr":  func(a int) int { return a - 1 },
 			"incr":  func(a int) int { return a + 1 },
 			"split": strings.Split,
-			"map": func(a map[string]string, b string) interface{} { return a[b] },
+			"map":   func(a map[string]string, b string) interface{} { return a[b] },
+			"pretty": func(v interface{}) string {
+				b, err := json.MarshalIndent(v, "", "\t")
+				if err != nil {
+					log.Println(err)
+				}
+				return string(b)
+			},
 		},
 	}
 	t.Load()
@@ -45,12 +53,12 @@ func NewTemplateStore(development bool) *TemplateStore {
 }
 
 func (ts *TemplateStore) Load() {
-	layouts, err := filepath.Glob(ts.TemplateDir +  "layouts/*.tmpl")
+	layouts, err := filepath.Glob(ts.TemplateDir + "layouts/*.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	includes, err := filepath.Glob(ts.TemplateDir +  "includes/*.tmpl")
+	includes, err := filepath.Glob(ts.TemplateDir + "includes/*.tmpl")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -66,11 +74,11 @@ func (ts *TemplateStore) Load() {
 func (ts *TemplateStore) Render(w http.ResponseWriter, name string, data Model) {
 	var tmpl *template.Template
 	if ts.Development {
-		includes, err := filepath.Glob(ts.TemplateDir +  "includes/*.tmpl")
+		includes, err := filepath.Glob(ts.TemplateDir + "includes/*.tmpl")
 		if err != nil {
 			log.Fatal(err)
 		}
-		files := append(includes, ts.TemplateDir +  "layouts/"+name)
+		files := append(includes, ts.TemplateDir+"layouts/"+name)
 		tmpl = template.Must(template.New("func").Funcs(ts.funcs).ParseFiles(files...))
 	} else {
 		var ok bool
