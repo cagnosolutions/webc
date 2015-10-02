@@ -3,12 +3,15 @@ package tmpl
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/cagnosolutions/web/util"
 )
 
 type Model map[string]interface{}
@@ -45,6 +48,10 @@ func NewTemplateStore(development bool) *TemplateStore {
 					log.Println(err)
 				}
 				return string(b)
+			},
+			"date": func(d string) string {
+				ds := util.SliceString(d, '-')
+				return fmt.Sprintf("%s/%s/%s", ds[1], ds[2], ds[0])
 			},
 		},
 	}
