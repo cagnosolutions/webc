@@ -3,6 +3,7 @@ package web
 import (
 	"net/http"
 	"strings"
+
 	"github.com/cagnosolutions/web/util"
 )
 
@@ -81,7 +82,6 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	return
 }
-
 
 func match(req []string, pat []string) (map[string]string, bool) {
 	vals := make(map[string]string)

@@ -24,12 +24,18 @@ func UUID4() string {
 	return fmt.Sprintf("%x-%x-%x-%x-%x", u[:4], u[4:6], u[6:8], u[8:10], u[10:])
 }
 
+func ToLowerFirst(s string) string {
+	return strings.ToLower(string(s[0])) + s[1:len(s)]
+}
+
 func SliceString(s string, b byte) []string {
 	var ss []string
 	if len(s) > 1 {
 		i := bytes.IndexByte([]byte(s), b)
 		for ; i > -1; i = bytes.IndexByte([]byte(s), b) {
-			ss = append(ss, s[0:i])
+			if i > 0 {
+				ss = append(ss, s[0:i])
+			}
 			s = s[i+1 : len(s)]
 		}
 		ss = append(ss, s[0:len(s)])
@@ -39,19 +45,12 @@ func SliceString(s string, b byte) []string {
 	return ss
 }
 
-func ToLowerFirst(s string) string {
-	return strings.ToLower(string(s[0])) + s[1:len(s)]
-}
-
-/*
-func SliceString(s string, b byte) []string {
+/*func SliceString(s string, b byte) []string {
 	var ss []string
 	if len(s) > 1 {
 		i := bytes.IndexByte([]byte(s), b)
 		for ; i > -1; i = bytes.IndexByte([]byte(s), b) {
-			if i > 0 {
-				ss = append(ss, s[0:i])
-			}
+			ss = append(ss, s[0:i])
 			s = s[i+1 : len(s)]
 		}
 		ss = append(ss, s[0:len(s)])
