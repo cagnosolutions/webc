@@ -82,7 +82,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-/*
+
 func match(req []string, pat []string) (map[string]string, bool) {
 	vals := make(map[string]string)
 	if len(req) != len(pat) {
@@ -98,8 +98,8 @@ func match(req []string, pat []string) (map[string]string, bool) {
 
 	return vals, true
 }
-*/
 
+/*
 func match(req []string, pat []string) (map[string]string, bool) {
 	v := make(map[string]string)
 	if len(req) == len(pat) {
@@ -117,3 +117,4 @@ func match(req []string, pat []string) (map[string]string, bool) {
 	}
 	return nil, false
 }
+*/
