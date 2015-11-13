@@ -4,26 +4,26 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cagnosolutions/web"
-	"github.com/cagnosolutions/web/tmpl"
+	"github.com/cagnosolutions/webc"
+	"github.com/cagnosolutions/webc/tmpl"
 	_ "github.com/davecheney/profile"
 )
 
 func main() {
 	//defer profile.Start(profile.CPUProfile).Stop()
-	web.Get("/", homeController)
-	web.Get("/user", user)
-	web.Get("/user/add", userAdd)
-	web.Get("/user/:id", userId)
-	web.Get("/reload", reloadTemplates)
-	web.Get("/:slug", landing)
-	web.Get("/login/:slug", multiLogin)
-	web.Get("/logout/:slug", logout)
-	web.Get("/protected/:slug", protected)
-	web.Serve(":8080")
+	webc.Get("/", homeController)
+	webc.Get("/user", user)
+	webc.Get("/user/add", userAdd)
+	webc.Get("/user/:id", userId)
+	webc.Get("/reload", reloadTemplates)
+	webc.Get("/:slug", landing)
+	webc.Get("/login/:slug", multiLogin)
+	webc.Get("/logout/:slug", logout)
+	webc.Get("/protected/:slug", protected)
+	webc.Serve(":8080")
 }
 
-func homeController(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func homeController(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	msgK, msgV := c.GetFlash()
 	tmpl.Render(w, "index.tmpl", tmpl.Model{
 		msgK:    msgV,
@@ -34,46 +34,46 @@ func homeController(w http.ResponseWriter, r *http.Request, c *web.Context) {
 	})
 }
 
-func landing(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func landing(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	slug := c.GetPathVar("slug")
 	_, msgV := c.GetFlash()
 	fmt.Fprintf(w, "Your are at the landing page for %s. %s", slug, msgV)
 }
 
-func multiLogin(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func multiLogin(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	slug := c.GetPathVar("slug")
 	c.SetAuth(true)
 	c.SetFlash("success", "You are now logged into "+slug+". Enjoy")
 	http.Redirect(w, r, "/"+slug, 303)
 }
 
-func logout(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func logout(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	slug := c.GetPathVar("slug")
 	c.SetAuth(false)
 	c.SetFlash("success", "You are now logged out. Thanks for visiting")
 	http.Redirect(w, r, "/"+slug, 303)
 }
 
-func protected(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func protected(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	slug := c.GetPathVar("slug")
 	c.CheckAuth(w, r, "/"+slug)
 	fmt.Fprintf(w, "You are authorized to view page %s", slug)
 }
 
-func user(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func user(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	fmt.Fprintf(w, "page: user, addr: %s, user-agent: %s", r.RemoteAddr, r.UserAgent())
 	return
 }
 
-func userAdd(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func userAdd(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	fmt.Fprintf(w, "User Add Page")
 }
 
-func userId(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func userId(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	fmt.Fprintf(w, "user id: %v", c.GetPathVar("id"))
 }
 
-func reloadTemplates(w http.ResponseWriter, r *http.Request, c *web.Context) {
+func reloadTemplates(w http.ResponseWriter, r *http.Request, c *webc.Context) {
 	if r.FormValue("user") == "admin" && r.FormValue("pass") == "admin" {
 		tmpl.Reload()
 		c.SetFlash("alertSuccess", "Successfully reloaded templates")
