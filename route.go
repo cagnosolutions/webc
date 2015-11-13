@@ -1,4 +1,4 @@
-package web
+package webc
 
 type Route struct {
 	method string

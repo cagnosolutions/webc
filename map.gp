@@ -1,4 +1,4 @@
-package web
+package webc
 
 import "github.com/cagnosolutions/safemap"
 
