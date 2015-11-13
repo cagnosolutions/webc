@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	. "github.com/cagnosolutions/web"
+	. "github.com/cagnosolutions/webc"
 )
 
 func main() {

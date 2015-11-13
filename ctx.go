@@ -1,4 +1,4 @@
-package web
+package webc
 
 import (
 	"fmt"
@@ -126,7 +126,7 @@ type Context struct {
 	path  map[string]string
 	flash []string
 	// add session related info map[string][]string or struct
-	auth  bool
+	auth bool
 }
 
 func (c *Context) SetPathVars(m map[string]string) {
