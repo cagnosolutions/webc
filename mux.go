@@ -1,10 +1,10 @@
-package web
+package webc
 
 import (
 	"net/http"
 	"strings"
 
-	"github.com/cagnosolutions/web/util"
+	"github.com/cagnosolutions/webc/util"
 )
 
 type controller func(http.ResponseWriter, *http.Request, *Context)

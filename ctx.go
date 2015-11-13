@@ -1,4 +1,4 @@
-package web
+package webc
 
 import (
 	"fmt"
@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cagnosolutions/web/util"
+	"github.com/cagnosolutions/webc/util"
 )
 
 const (

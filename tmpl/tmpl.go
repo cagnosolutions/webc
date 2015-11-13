@@ -11,7 +11,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cagnosolutions/web/util"
+	"github.com/cagnosolutions/webc/util"
 )
 
 type Model map[string]interface{}
