@@ -1,7 +1,7 @@
 package main
 
 import (
-    "github.com/cagnosolutions/web/tmpl"
+    "github.com/cagnosolutions/webc/tmpl"
 )
 
 // default

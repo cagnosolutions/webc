@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/cagnosolutions/web"
+	"github.com/cagnosolutions/webc"
 )
 
 // GC Rate
@@ -10,10 +10,10 @@ import (
 
 func main() {
 	// default
-	mux := &web.Mux{}
+	mux := &webc.Mux{}
 
 	// custom config
-	mux := &web.Mux{
+	mux := &webc.Mux{
 		Rate:       HOUR / 2,
 		SessId:     "GOSESS",
 		LoggerPath: "/opt/logs",
